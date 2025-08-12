@@ -9,7 +9,7 @@
  * - Dashboard data
  *
  * NOTE: This file expects the sheets created by setup script:
- * PR_Master, PR_Items, PO_Master, PO_Items, Payments, Item_Master, Vendor_Master, Approval_Matrix, COUNTERS, Audit_Log
+ * PR_Master, PR_Items, PO_Master, PO_Items, Payments, Vendor_Master, Approval_Matrix, COUNTERS, Audit_Log
  */
 
 // ---- Helpers ----
@@ -18,7 +18,6 @@ function getHeaderMap(sheet) {
   const headers = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
   const map = {};
   headers.forEach((h,i) => map[h] = i);
-  // console.log("Header Map:", map); // Add this line
   return map;
 }
 
@@ -27,7 +26,6 @@ function safeGetData(sheet) {
   const lc = sheet.getLastColumn();
   if (lr < 2 || lc < 1) return [];
   const data = sheet.getRange(2,1,lr-1,lc).getValues();
-  // console.log("Data from safeGetData:", data); // Add this line
   return data;
 }
 
@@ -71,7 +69,6 @@ function nextSerialCounter(key) {
 }
 
 function formatSerial(prefix, siteOrYear, d, serial) {
-  // prefix like PR or PO; siteOrYear may be site or year string
   return `${prefix}-${siteOrYear}-${d}-${String(serial).padStart(4,'0')}`;
 }
 
@@ -95,7 +92,7 @@ function logAudit(entity, entityId, action, fromState, toState, remarks, payload
 
 // createPR: accept an object with fields and items array
 function createPR(payload) {
-  // payload: { site, requestedBy, vendorId, purchaseCategory, paymentTerms, deliveryTerms, deliveryLocation, expectedDeliveryDate, items: [{Item_Code, Item_Name, Qty, UOM, Rate, GST_%, Purpose}] }
+  // payload: { site, requestedBy, vendorId, purchaseCategory, paymentTerms, deliveryTerms, deliveryLocation, expectedDeliveryDate, items: [{Item_Name, Qty, UOM, Rate, GST_%, Purpose}] }
   const ss = SpreadsheetApp.getActive();
   const prSheet = ss.getSheetByName("PR_Master");
   const prItemsSheet = ss.getSheetByName("PR_Items");
@@ -133,7 +130,6 @@ function createPR(payload) {
     appendByHeader("PR_Items", {
       "PR_ID": prId,
       "Line_No": idx+1,
-      "Item_Code": it.Item_Code || it.itemCode || '',
       "Item_Name": it.Item_Name || it.itemName || '',
       "Purpose": it.Purpose || it.purpose || '',
       "Qty": qty,
@@ -280,7 +276,6 @@ function createPOFromPR(payload) {
     appendByHeader("PO_Items", {
       "PO_ID": poId,
       "Line_No": idx+1,
-      "Item_Code": r[prItemsHeaders['Item_Code']],
       "Item_Name": r[prItemsHeaders['Item_Name']],
       "Qty": r[prItemsHeaders['Qty']],
       "UOM": r[prItemsHeaders['UOM']],
@@ -578,8 +573,6 @@ function getMasterDataForForm() {
       masterData[header] = uniqueColumnValues;
     }
   });
-
-  // console.log("Master Data:", masterData); // Add this line
   return masterData;
 }
 
@@ -624,82 +617,24 @@ function createVendor(vendorPayload) {
 /**
  * Returns all vendors as array of objects for the form dropdown/autofill.
  */
-// function getVendorMasterList() {
-//   try {
-//     console.log("SERVER: getVendorMasterList function started.");
-//     const ss = SpreadsheetApp.getActive();
-//     const sheet = ss.getSheetByName("Vendor_Master");
-//     if (!sheet) {
-//       console.error("SERVER: Vendor_Master sheet not found.");
-//       return [];
-//     }
-//     const data = sheet.getDataRange().getValues();
-//     console.log(`SERVER: Found ${data.length - 1} total rows of data in Vendor_Master.`);
-
-//     if (data.length <= 1) { 
-//       console.warn("SERVER: Vendor_Master sheet is empty or contains only headers.");
-//       return [];
-//     }
-//     const headers = data[0];
-//     const activeIdx = headers.indexOf("Active");
-
-//     if (activeIdx === -1) {
-//       console.error('SERVER: "Active" column not found in Vendor_Master headers.');
-//       return [];
-//     }
-    
-//     console.log(`SERVER: 'Active' column found at index ${activeIdx}.`);
-    
-//     const allVendors = data.slice(1).map(row => {
-//       let obj = {};
-//       headers.forEach((h, i) => obj[h] = row[i]);
-//       return obj;
-//     });
-
-//     const activeVendors = allVendors.filter(vendor => vendor.Active && vendor.Active.toString().trim() === "Yes");
-    
-//     console.log(`SERVER: Filtered down to ${activeVendors.length} active vendors.`);
-    
-//     // *** NEW LOGGING: Show the actual data of the vendors being returned ***
-//     if (activeVendors.length > 0) {
-//       console.log("SERVER: Returning the following active vendors:", JSON.stringify(activeVendors, null, 2));
-//     }
-    
-//     return activeVendors;
-
-//   } catch (e) {
-//     console.error("SERVER: Error in getVendorMasterList: " + e.toString(), e.stack);
-//     return []; 
-//   }
-// }
-/**
- * Returns all vendors as array of objects for the form dropdown/autofill.
- */
 function getVendorMasterList() {
   try {
-    console.log("SERVER: getVendorMasterList function started.");
     const ss = SpreadsheetApp.getActive();
     const sheet = ss.getSheetByName("Vendor_Master");
     if (!sheet) {
-      console.error("SERVER: Vendor_Master sheet not found.");
       return [];
     }
     const data = sheet.getDataRange().getValues();
-    console.log(`SERVER: Found ${data.length - 1} total rows of data in Vendor_Master.`);
 
     if (data.length <= 1) { 
-      console.warn("SERVER: Vendor_Master sheet is empty or contains only headers.");
       return [];
     }
     const headers = data[0];
     const activeIdx = headers.indexOf("Active");
 
     if (activeIdx === -1) {
-      console.error('SERVER: "Active" column not found in Vendor_Master headers.');
       return [];
     }
-    
-    console.log(`SERVER: 'Active' column found at index ${activeIdx}.`);
     
     const allVendors = data.slice(1).map(row => {
       let obj = {};
@@ -717,16 +652,9 @@ function getVendorMasterList() {
 
     const activeVendors = allVendors.filter(vendor => vendor.Active && vendor.Active.toString().trim() === "Yes");
     
-    console.log(`SERVER: Filtered down to ${activeVendors.length} active vendors.`);
-    
-    if (activeVendors.length > 0) {
-      console.log("SERVER: Returning the following active vendors:", JSON.stringify(activeVendors, null, 2));
-    }
-    
     return activeVendors;
 
   } catch (e) {
-    console.error("SERVER: Error in getVendorMasterList: " + e.toString(), e.stack);
     return []; 
   }
 }

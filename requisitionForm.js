@@ -231,7 +231,7 @@ function requisitionFormPage(user) {
 
         <h4 style="margin-top:12px">Items</h4>
         <table class="items-table" id="itemsTable">
-          <thead><tr><th>Item Code</th><th>Name</th><th>Qty</th><th>UOM</th><th>Rate</th><th>GST%</th><th>Action</th></tr></thead>
+          <thead><tr><th>Name</th><th>Qty</th><th>UOM</th><th>Rate</th><th>GST%</th><th>Action</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn" onclick="addItemRow()">Add Item</button>
@@ -254,6 +254,7 @@ function requisitionFormPage(user) {
 
     <script>
       let vendorMaster = [];
+      let masterData = {};
 
       // --- UTILITY TO SHOW MESSAGES ---
       function showMessage(message, isError = false) {
@@ -270,6 +271,7 @@ function requisitionFormPage(user) {
             console.error("Master data is null or undefined.");
             return;
           }
+          masterData = md;
           
           const populate = (elementId, options) => {
               const select = document.getElementById(elementId);
@@ -283,12 +285,12 @@ function requisitionFormPage(user) {
               }
           };
 
-          populate('site', md.Sites);
-          populate('vendorRegistered', md.Yes_No);
-          populate('purchaseCategory', md.Purchase_Categories);
-          populate('paymentTerms', md.Payment_Terms);
-          populate('deliveryTerms', md.Delivery_Terms);
-          populate('newProvidingSites', md.Sites);
+          populate('site', masterData.Sites);
+          populate('vendorRegistered', masterData.Yes_No);
+          populate('purchaseCategory', masterData.Purchase_Categories);
+          populate('paymentTerms', masterData.Payment_Terms);
+          populate('deliveryTerms', masterData.Delivery_Terms);
+          populate('newProvidingSites', masterData.Sites);
 
         }).withFailureHandler(function(err) {
           showMessage("Failed to load master data: " + err.message, true);
@@ -401,10 +403,18 @@ function requisitionFormPage(user) {
       function addItemRow() {
         const tbody = document.querySelector('#itemsTable tbody');
         const tr = document.createElement('tr');
-        tr.innerHTML = \`<td><input name="itemCode[]" class="item-input"></td>
-                        <td><input name="itemName[]" class="item-input"></td>
+
+        // Create UOM dropdown
+        let uomOptions = '<option value="">Select UOM</option>';
+        if(masterData.UOMs && Array.isArray(masterData.UOMs)){
+            masterData.UOMs.forEach(uom => {
+                uomOptions += \`<option value="\${uom}">\${uom}</option>\`;
+            });
+        }
+
+        tr.innerHTML = \`<td><input name="itemName[]" class="item-input"></td>
                         <td><input type="number" name="qty[]" min="0" class="item-input"></td>
-                        <td><input name="uom[]" class="item-input"></td>
+                        <td><select name="uom[]" class="item-input">\${uomOptions}</select></td>
                         <td><input type="number" name="rate[]" class="item-input"></td>
                         <td><input type="number" name="gst[]" value="0" class="item-input"></td>
                         <td><button type="button" onclick="this.closest('tr').remove()" class="btn-remove">X</button></td>\`;
@@ -422,7 +432,6 @@ function requisitionFormPage(user) {
             const qty = Number(row.querySelector('[name="qty[]"]').value || 0);
             if (itemName && qty > 0) {
                 items.push({
-                    Item_Code: row.querySelector('[name="itemCode[]"]').value,
                     Item_Name: itemName,
                     Qty: qty,
                     UOM: row.querySelector('[name="uom[]"]').value,
