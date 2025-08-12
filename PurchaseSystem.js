@@ -104,7 +104,12 @@ function createPR(payload) {
   let vendorId = payload.vendorId || '';
   // If vendor is not registered, register now
   if (payload.vendorRegistered === "No" && payload.vendorDetails) {
-    vendorId = registerVendor(payload.vendorDetails);
+    const newVendor = registerVendor(payload.vendorDetails);
+    if (newVendor.success) {
+      vendorId = newVendor.vendorId;
+    } else {
+      throw new Error(newVendor.message || "Failed to register new vendor.");
+    }
   }
 
   // generate PR_ID
@@ -619,55 +624,6 @@ function createVendor(vendorPayload) {
 /**
  * Returns all vendors as array of objects for the form dropdown/autofill.
  */
-// function getVendorMasterList() {
-//   try {
-//     const ss = SpreadsheetApp.getActiveSpreadsheet();
-//     const sheet = ss.getSheetByName("Vendor_Master");
-//     if (!sheet) {
-//       console.error("Vendor_Master sheet not found.");
-//       return [];
-//     }
-
-//     const headers = getHeaderMap(sheet);
-//     console.log("Headers Map:", headers);
-
-//     const data = safeGetData(sheet);
-//     console.log("Data from Sheet:", data); // Add this line
-
-//     return data.map(row => {
-//       const vendor = {};
-//       Object.keys(headers).forEach(key => {
-//         vendor[key] = row[headers[key]];
-//       });
-//       return vendor;
-//     });
-//   } catch (e) {
-//     console.error("Error in getVendorMasterList: " + e.toString());
-//     return null; // Return null in case of error
-//   }
-// }
-// function getVendorMasterList() {
-//   try {
-//     const ss = SpreadsheetApp.getActive();
-//     const sheet = ss.getSheetByName("Vendor_Master");
-//     if(sheet){
-//       console.log("Vendor_Master sheet found.");
-//     }
-//     if (!sheet) return [];
-//     const data = sheet.getDataRange().getValues();
-//     const headers = data[0];
-//     return data.slice(1)
-//       .filter(row => row[headers.indexOf("Active")] === "Yes")
-//       .map(row => {
-//         let obj = {};
-//         headers.forEach((h, i) => obj[h] = row[i]);
-//         return obj;
-//       });
-//   } catch (e) {
-//     Logger.log("Error in getVendorMasterList: " + e);
-//     return [];
-//   }
-// }
 function getVendorMasterList() {
   try {
     const ss = SpreadsheetApp.getActive();
@@ -725,6 +681,11 @@ function registerVendor(vendorDetails) {
       "Created_At": new Date(),
       "Created_By": Session.getActiveUser().getEmail()
     };
+    
+    // Correctly map the incoming 'Vendor_Name' to 'Company_Name'
+    if (vendorDetails.Vendor_Name) {
+        newVendorData.Company_Name = vendorDetails.Vendor_Name;
+    }
 
     appendByHeader("Vendor_Master", newVendorData);
 
@@ -736,4 +697,3 @@ function registerVendor(vendorDetails) {
     return { success: false, message: e.toString() };
   }
 }
-

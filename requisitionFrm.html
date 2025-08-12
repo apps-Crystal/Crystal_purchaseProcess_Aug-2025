@@ -370,7 +370,7 @@
     } else if (vendorRegistered === 'No') {
       const providingSites = Array.from(form.newProvidingSites.selectedOptions).map(opt => opt.value).join(', ');
       vendorDetails = {
-        Vendor_Name: form.newVendorName.value,
+        Company_Name: form.newVendorName.value,
         Contact_Person: form.newContactPerson.value,
         Contact_Number: form.newContactNumber.value,
         Email_ID: form.newEmail.value,
@@ -384,7 +384,7 @@
         Vendor_Address: form.newVendorAddress.value,
         Providing_Sites: providingSites
       };
-      if(!vendorDetails.Vendor_Name){
+      if(!vendorDetails.Company_Name){
           showMessage("Please enter the new vendor's name.", true);
           return;
       }
