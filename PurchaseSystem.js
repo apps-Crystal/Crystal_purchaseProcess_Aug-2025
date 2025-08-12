@@ -605,7 +605,7 @@ function createVendor(vendorPayload) {
   "Bank_Name": vendorPayload.bankName,
   "Acc_Holder_Name": vendorPayload.accountHolderName,
   "Acc_Number": vendorPayload.accountNo,
-  "Branch_Name": vendorPayload.branchName,
+  "Branch__Name": vendorPayload.branchName,
   "IFSC_CODE": vendorPayload.ifscCode,
   "GST_Number": vendorPayload.gstNo,
   "Providing_Sites": vendorPayload.providingSites,
@@ -626,29 +626,29 @@ function createVendor(vendorPayload) {
  */
 function getVendorMasterList() {
   try {
-    console.log("getVendorMasterList: Function started.");
+    console.log("SERVER: getVendorMasterList function started.");
     const ss = SpreadsheetApp.getActive();
     const sheet = ss.getSheetByName("Vendor_Master");
     if (!sheet) {
-      console.error("getVendorMasterList: Vendor_Master sheet not found.");
+      console.error("SERVER: Vendor_Master sheet not found.");
       return [];
     }
     const data = sheet.getDataRange().getValues();
-    console.log(`getVendorMasterList: Found ${data.length - 1} total rows of data in Vendor_Master.`);
+    console.log(`SERVER: Found ${data.length - 1} total rows of data in Vendor_Master.`);
 
-    if (data.length <= 1) { // Only headers or empty
-      console.warn("getVendorMasterList: Vendor_Master sheet is empty or contains only headers.");
+    if (data.length <= 1) { 
+      console.warn("SERVER: Vendor_Master sheet is empty or contains only headers.");
       return [];
     }
     const headers = data[0];
     const activeIdx = headers.indexOf("Active");
 
     if (activeIdx === -1) {
-      console.error('getVendorMasterList: "Active" column not found in Vendor_Master headers.');
+      console.error('SERVER: "Active" column not found in Vendor_Master headers.');
       return [];
     }
     
-    console.log(`getVendorMasterList: 'Active' column found at index ${activeIdx}.`);
+    console.log(`SERVER: 'Active' column found at index ${activeIdx}.`);
     
     const allVendors = data.slice(1).map(row => {
       let obj = {};
@@ -656,15 +656,20 @@ function getVendorMasterList() {
       return obj;
     });
 
-    const activeVendors = allVendors.filter(vendor => vendor.Active === "Yes");
+    const activeVendors = allVendors.filter(vendor => vendor.Active.trim() === "Yes");
     
-    console.log(`getVendorMasterList: Filtered down to ${activeVendors.length} active vendors.`);
+    console.log(`SERVER: Filtered down to ${activeVendors.length} active vendors.`);
+    
+    // *** NEW LOGGING: Show the actual data of the vendors being returned ***
+    if (activeVendors.length > 0) {
+      console.log("SERVER: Returning the following active vendors:", JSON.stringify(activeVendors, null, 2));
+    }
     
     return activeVendors;
 
   } catch (e) {
-    console.error("Error in getVendorMasterList: " + e.toString(), e.stack);
-    return []; // Return empty array on error
+    console.error("SERVER: Error in getVendorMasterList: " + e.toString(), e.stack);
+    return []; 
   }
 }
 
