@@ -1,7 +1,6 @@
-// requisitionForm.gs
+// requisitionForm.gs - Fixed version
 
 function requisitionFormPage(user) {
-  // The HTML and client-side JavaScript from requisitionFrm.html are now embedded here
   const htmlTemplate = `
     <style>
       .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
@@ -200,7 +199,7 @@ function requisitionFormPage(user) {
 
           <div>
             <label for="requestedBy">Requested By (email)</label>
-            <input type="email" id="requestedBy" name="requestedBy" value="<?= user.email ?>" required readonly style="background-color:#eee;">
+            <input type="email" id="requestedBy" name="requestedBy" value="${user.email}" required readonly style="background-color:#eee;">
           </div>
 
           <div>
@@ -521,7 +520,8 @@ function requisitionFormPage(user) {
     </script>
   `;
 
-  const t = HtmlService.createTemplate(htmlTemplate);
-  t.user = user;
-  return t.evaluate().getContent();
+  return HtmlService.createHtmlOutput(htmlTemplate)
+    .setTitle('New Purchase Requisition')
+    .setWidth(1100)
+    .setHeight(900);
 }

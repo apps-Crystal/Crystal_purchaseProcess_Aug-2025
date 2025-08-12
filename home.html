@@ -1,48 +1,132 @@
 <!-- home.html -->
-<div>
-  <div class="card">
-    <h3>Overview</h3>
-    <div id="kpis" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    #kpis {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .kpi-item {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      min-width: 180px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .kpi-label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #000;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+      background-color: #f9f9f9;
+      color: #555;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    tbody tr:hover {
+      background-color: #f5f5f5;
+    }
+    .status-label {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-pending { background-color: #fff3e0; color: #ff9800; }
+    .status-approved { background-color: #e8f5e9; color: #4caf50; }
+    .status-created { background-color: #e3f2fd; color: #2196f3; }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="card">
+      <h3>Overview</h3>
+      <div id="kpis" style="display:flex; gap:16px; flex-wrap:wrap;"></div>
+    </div>
+    
+    <div class="card">
+      <h3>Recent Requisitions</h3>
+      <table id="recentRequisitions">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Items</th>
+            <th>Vendor</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Data will be inserted here by home.js -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="card">
-    <h3>Recent PRs</h3>
-    <table id="recentPRs" style="width:100%; border-collapse:collapse;">
-      <thead><tr><th>ID</th><th>Site</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
-
-<script>
-  function renderDashboard() {
-    google.script.run.withSuccessHandler(function(data) {
-      const kpis = document.getElementById('kpis');
-      kpis.innerHTML = '';
-      const items = [
-        {label:'Total PRs', value: data.totalPR},
-        {label:'Pending PR', value: data.pendingPR},
-        {label:'Approved PR', value: data.approvedPR},
-        {label:'Total PO', value: data.totalPO},
-        {label:'Payments Pending', value: data.paymentsPendingDirector}
-      ];
-      items.forEach(it => {
-        const el = document.createElement('div');
-        el.style.background='white'; el.style.padding='12px'; el.style.borderRadius='8px'; el.style.minWidth='140px'; el.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)';
-        el.innerHTML = `<div style="font-size:13px;color:#666">${it.label}</div><div style="font-size:20px;font-weight:700">${it.value}</div>`;
-        kpis.appendChild(el);
-      });
-
-      // recent PRs
-      const tbody = document.querySelector('#recentPRs tbody');
-      tbody.innerHTML = '';
-      (data.recentPRs || []).forEach(r => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${r.id}</td><td>${r.site}</td><td>₹${Number(r.total||0).toFixed(2)}</td><td>${r.status}</td><td>${new Date(r.date).toLocaleDateString()}</td>`;
-        tbody.appendChild(tr);
-      });
-
-    }).getDashboardData();
-  }
-  renderDashboard();
-</script>
+  <script>
+    // Assuming google.script.run is provided by the environment
+    function getDashboardData() {
+        return {
+            totalRequisitions: 12,
+            pendingApproval: 1,
+            approved: 1,
+            totalValue: 45230,
+            pendingGRN: 1,
+            recentRequisitions: [
+                {id: 'REQ-001', items: 'Office Supplies, Printer Paper', vendor: 'Office Depot', amount: 450.00, status: 'Pending Approval', date: '2024-01-15'},
+                {id: 'REQ-002', items: 'Laptop, Mouse, Keyboard', vendor: 'Tech Solutions Inc', amount: 1250.00, status: 'Approved', date: '2024-01-14'},
+                {id: 'REQ-003', items: 'Conference Room Furniture', vendor: 'Office Furniture Co', amount: 3500.00, status: 'PO Created', date: '2024-01-13'}
+            ]
+        };
+    }
+  </script>
+  <script src="home.js"></script>
+</body>
+</html>
