@@ -405,8 +405,8 @@ function requisitionFormPage(user) {
 
         // Create UOM dropdown
         let uomOptions = '<option value="">Select UOM</option>';
-        if(masterData.UOMs && Array.isArray(masterData.UOMs)){
-            masterData.UOMs.forEach(uom => {
+        if(masterData.UOM && Array.isArray(masterData.UOM)){
+            masterData.UOM.forEach(uom => {
                 uomOptions += \`<option value="\${uom}">\${uom}</option>\`;
             });
         }
