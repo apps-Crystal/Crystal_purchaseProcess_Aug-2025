@@ -36,14 +36,69 @@
       </div>
       <div></div>
 
-      <!-- Section for selecting a registered vendor -->
-      <div id="registeredVendorSection" class="hidden" style="grid-column:span 2;">
-        <label for="vendorSelect">Select Vendor</label>
-        <select id="vendorSelect" name="vendorSelect" onchange="onVendorSelectChange()"></select>
-        <div id="vendorDetails" class="hidden"></div>
+      <div id="registeredVendorSection" class="hidden" style="grid-column:span 2; background-color: #fefefe; padding:15px; border-radius:8px; border: 1px solid #e0e0e0;">
+        <h4 style="margin-bottom:12px;">Registered Vendor Details</h4>
+        <div class="form-grid">
+            <div>
+                <label for="vendorSelect">Select Vendor</label>
+                <select id="vendorSelect" name="vendorSelect" onchange="onVendorSelectChange()"></select>
+            </div>
+            <div></div>
+            <div>
+                <label for="registeredVendorName">Vendor Name</label>
+                <input type="text" id="registeredVendorName" name="registeredVendorName" readonly>
+            </div>
+            <div>
+                <label for="registeredContactPerson">Contact Person</label>
+                <input type="text" id="registeredContactPerson" name="registeredContactPerson" readonly>
+            </div>
+            <div>
+                <label for="registeredContactNumber">Contact Number</label>
+                <input type="text" id="registeredContactNumber" name="registeredContactNumber" readonly>
+            </div>
+            <div>
+                <label for="registeredEmail">Email</label>
+                <input type="email" id="registeredEmail" name="registeredEmail" readonly>
+            </div>
+            <div>
+                <label for="registeredGSTNumber">GST Number</label>
+                <input type="text" id="registeredGSTNumber" name="registeredGSTNumber" readonly>
+            </div>
+            <div>
+                <label for="registeredPAN">PAN</label>
+                <input type="text" id="registeredPAN" name="registeredPAN" readonly>
+            </div>
+             <div style="grid-column: span 2;">
+                <label for="registeredVendorAddress">Vendor Address</label>
+                <textarea id="registeredVendorAddress" name="registeredVendorAddress" rows="3" readonly></textarea>
+            </div>
+            <div>
+                <label for="registeredBankName">Bank Name</label>
+                <input type="text" id="registeredBankName" name="registeredBankName" readonly>
+            </div>
+            <div>
+                <label for="registeredAccHolderName">Account Holder Name</label>
+                <input type="text" id="registeredAccHolderName" name="registeredAccHolderName" readonly>
+            </div>
+            <div>
+                <label for="registeredAccountNumber">Account Number</label>
+                <input type="text" id="registeredAccountNumber" name="registeredAccountNumber" readonly>
+            </div>
+            <div>
+                 <label for="registeredBranchName">Branch Name</label>
+                <input type="text" id="registeredBranchName" name="registeredBranchName" readonly>
+            </div>
+            <div>
+                <label for="registeredIFSC">IFSC Code</label>
+                <input type="text" id="registeredIFSC" name="registeredIFSC" readonly>
+            </div>
+            <div>
+                <label for="registeredProvidingSites">Providing Sites</label>
+                <input type="text" id="registeredProvidingSites" name="registeredProvidingSites" readonly>
+            </div>
+        </div>
       </div>
 
-      <!-- Section for adding a new vendor -->
       <div id="newVendorSection" class="hidden" style="grid-column:span 2; background-color: #fefefe; padding:15px; border-radius:8px; border: 1px solid #e0e0e0;">
         <h4 style="margin-bottom:12px;">New Vendor Details</h4>
         <div class="form-grid">
@@ -199,11 +254,10 @@
       vendorSelect.innerHTML = '<option value="" disabled selected>Select a Vendor</option>';
       
       vendorMaster.forEach(v => {
-        // *** FIX: Using "Vendor_Name" to match your sheet's actual column header ***
-        if(v.Vendor_Name) { 
+        if(v.Company_Name) { 
             const o = document.createElement('option');
             o.value = v.Vendor_ID;
-            o.textContent = `${v.Vendor_Name} (${v.Vendor_ID})`;
+            o.textContent = `${v.Company_Name} (${v.Vendor_ID})`;
             vendorSelect.appendChild(o);
         }
       });
@@ -220,7 +274,6 @@
     
     registeredSection.classList.toggle('hidden', val !== 'Yes');
     newVendorSection.classList.toggle('hidden', val !== 'No');
-    document.getElementById('vendorDetails').classList.add('hidden'); // Hide details initially
 
     if (val === 'Yes' && vendorMaster.length === 0) {
       populateVendorDropdown();
@@ -231,33 +284,36 @@
   function onVendorSelectChange() {
     const vendorId = document.getElementById('vendorSelect').value;
     const vendor = vendorMaster.find(v => v.Vendor_ID === vendorId);
-    const detailsDiv = document.getElementById('vendorDetails');
     
     if (vendor) {
-       // *** FIX: Displaying all requested fields with correct property names from your list ***
-      detailsDiv.innerHTML = `
-        <div class="details-grid">
-            <div><strong>Contact Person:</strong><br>${vendor.Contact_Person || 'N/A'}</div>
-            <div><strong>Contact Number:</strong><br>${vendor.Contact_Number || 'N/A'}</div>
-            <div><strong>Email:</strong><br>${vendor.Email_ID || 'N/A'}</div>
-            <div><strong>PAN:</strong><br>${vendor.Vendor_PAN || 'N/A'}</div>
-            <div><strong>GST Number:</strong><br>${vendor.GST_Number || 'N/A'}</div>
-            <div><strong>Providing Sites:</strong><br>${vendor.Providing_Sites || 'N/A'}</div>
-        </div>
-        <hr style="margin:10px 0; border-color: #dee2e6;">
-        <div class="details-grid">
-            <div><strong>Bank Name:</strong><br>${vendor.Bank_Name || 'N/A'}</div>
-            <div><strong>Account Holder:</strong><br>${vendor.Acc_Holder_Name || 'N/A'}</div>
-            <div><strong>Account No:</strong><br>${vendor.Acc_Number || 'N/A'}</div>
-            <div><strong>Branch:</strong><br>${vendor.Branch_Name || 'N/A'}</div>
-            <div><strong>IFSC Code:</strong><br>${vendor.IFSC_CODE || 'N/A'}</div>
-        </div>
-        <hr style="margin:10px 0; border-color: #dee2e6;">
-        <div><strong>Address:</strong><br>${vendor.Vendor_Address || 'N/A'}</div>
-      `;
-      detailsDiv.classList.remove('hidden');
+      document.getElementById('registeredVendorName').value = vendor.Company_Name || '';
+      document.getElementById('registeredContactPerson').value = vendor.Contact_Person || '';
+      document.getElementById('registeredContactNumber').value = vendor.Contact_Number || '';
+      document.getElementById('registeredEmail').value = vendor.Email_ID || '';
+      document.getElementById('registeredGSTNumber').value = vendor.GST_Number || '';
+      document.getElementById('registeredPAN').value = vendor.Vendor_PAN || '';
+      document.getElementById('registeredVendorAddress').value = vendor.Vendor_Address || '';
+      document.getElementById('registeredBankName').value = vendor.Bank_Name || '';
+      document.getElementById('registeredAccHolderName').value = vendor.Acc_Holder_Name || '';
+      document.getElementById('registeredAccountNumber').value = vendor.Acc_Number || '';
+      document.getElementById('registeredBranchName').value = vendor.Branch_Name || '';
+      document.getElementById('registeredIFSC').value = vendor.IFSC_CODE || '';
+      document.getElementById('registeredProvidingSites').value = vendor.Providing_Sites || '';
     } else {
-      detailsDiv.classList.add('hidden');
+      // Clear fields if no vendor is selected
+      document.getElementById('registeredVendorName').value = '';
+      document.getElementById('registeredContactPerson').value = '';
+      document.getElementById('registeredContactNumber').value = '';
+      document.getElementById('registeredEmail').value = '';
+      document.getElementById('registeredGSTNumber').value = '';
+      document.getElementById('registeredPAN').value = '';
+      document.getElementById('registeredVendorAddress').value = '';
+      document.getElementById('registeredBankName').value = '';
+      document.getElementById('registeredAccHolderName').value = '';
+      document.getElementById('registeredAccountNumber').value = '';
+      document.getElementById('registeredBranchName').value = '';
+      document.getElementById('registeredIFSC').value = '';
+      document.getElementById('registeredProvidingSites').value = '';
     }
   }
 
@@ -278,7 +334,6 @@
   // --- SUBMIT THE PR FORM ---
   function submitPR() {
     const form = document.getElementById('prForm');
-    // ... (rest of the submitPR function remains the same, it should already be correct)
     const items = [];
     const itemRows = document.querySelectorAll('#itemsTable tbody tr');
 
@@ -359,7 +414,6 @@
         showMessage('PR Created successfully: ' + (resp.prId || ''));
         form.reset();
         document.querySelector('#itemsTable tbody').innerHTML = '';
-        document.getElementById('vendorDetails').innerHTML = '';
         onVendorRegisteredChange(); 
       } else {
         showMessage(resp.message || 'An unknown error occurred.', true);
