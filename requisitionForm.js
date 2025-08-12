@@ -6,8 +6,527 @@
 //   return t.evaluate().getContent().setMimeType(ContentService.MimeType.HTML).getContent();
 // }
 
+// function requisitionFormPage(user) {
+//   const t = HtmlService.createTemplateFromFile('requisitionFrm');
+//   t.user = user;
+//   return t.evaluate().getContent();
+// }
+
+// requisitionForm.gs
+
 function requisitionFormPage(user) {
-  const t = HtmlService.createTemplateFromFile('requisitionFrm');
+  // The HTML and client-side JavaScript from requisitionFrm.html are now embedded here
+  const htmlTemplate = `
+    <style>
+      .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+      .details-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+      label { font-weight:600; font-size:13px; color:#333; margin-bottom:6px; display:block; }
+      input, select, textarea { width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; box-sizing: border-box; }
+      .btn { background:#2962ff; color:#fff; padding:10px 14px; border:none; border-radius:6px; cursor:pointer; font-weight: 600; }
+      .items-table { width:100%; border-collapse:collapse; margin-top:12px; }
+      .items-table th, .items-table td { padding:8px; border-bottom:1px solid #eee; text-align:left; }
+      .hidden { display:none; }
+      #msg { margin-top: 12px; padding: 10px; border-radius: 6px; display: none; text-align: center; font-weight: 500;}
+      .msg-success { background-color: #e6fffa; color: #00a78e; border: 1px solid #00a78e; }
+      .msg-error { background-color: #ffebee; color: #c62828; border: 1px solid #c62828;}
+      .btn-remove { background-color: #ef4444; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+      #vendorDetails {
+          margin-top:8px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;
+          font-size: 14px; line-height: 1.6;
+      }
+       /* Modal Styles */
+      .modal-bg {
+        display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;
+      }
+      .modal-bg.active { display: flex; }
+      .modal-content {
+        background: #fff; border-radius: 8px; padding: 30px; width: 90%; max-width: 900px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.15); max-height: 80vh; overflow-y: auto;
+      }
+      .close-modal { float: right; cursor: pointer; font-size: 1.5em; color: #888; }
+      
+      /* Vendor Card Styles */
+      .vendor-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 15px;
+          margin-top: 20px;
+      }
+      .vendor-card {
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 15px;
+          cursor: pointer;
+          transition: box-shadow 0.3s, border-color 0.3s;
+      }
+      .vendor-card:hover {
+          border-color: #2962ff;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      .vendor-card h5 { margin: 0 0 10px 0; font-size: 1rem; color: #2962ff; }
+      .vendor-card p { margin: 4px 0; font-size: 0.9rem; color: #555; }
+      .vendor-card p strong { color: #333; }
+    </style>
+
+    <div class="card">
+      <h3>New Purchase Requisition</h3>
+      <form id="prForm">
+        <div class="form-grid">
+          <div>
+            <label for="site">Site</label>
+            <select id="site" name="site" required></select>
+          </div>
+          <div></div>
+
+          <div>
+            <label for="vendorRegistered">Is Vendor Registered?</label>
+            <select id="vendorRegistered" name="vendorRegistered" required onchange="onVendorRegisteredChange()">
+               <option value="" disabled selected>Select an Option</option>
+            </select>
+          </div>
+          <div></div>
+
+          <div id="registeredVendorSection" class="hidden" style="grid-column:span 2; background-color: #fefefe; padding:15px; border-radius:8px; border: 1px solid #e0e0e0;">
+            <h4 style="margin-bottom:12px;">Registered Vendor Details</h4>
+             <div class="form-grid">
+                <div>
+                  <label for="selectedVendorDisplay">Selected Vendor</label>
+                  <input type="text" id="selectedVendorDisplay" placeholder="Click 'Select Vendor' button" readonly style="background-color:#eee; cursor:pointer;" onclick="openVendorModal()">
+                  <input type="hidden" id="vendorSelect" name="vendorSelect">
+                </div>
+                <div>
+                  <label>&nbsp;</label>
+                  <button type="button" class="btn" style="width:auto; padding: 8px 12px; margin-top:0;" onclick="openVendorModal()">Select Vendor</button>
+                </div>
+                <div>
+                    <label for="registeredVendorName">Vendor Name</label>
+                    <input type="text" id="registeredVendorName" name="registeredVendorName" readonly>
+                </div>
+                <div>
+                    <label for="registeredContactPerson">Contact Person</label>
+                    <input type="text" id="registeredContactPerson" name="registeredContactPerson" readonly>
+                </div>
+                <div>
+                    <label for="registeredContactNumber">Contact Number</label>
+                    <input type="text" id="registeredContactNumber" name="registeredContactNumber" readonly>
+                </div>
+                <div>
+                    <label for="registeredEmail">Email</label>
+                    <input type="email" id="registeredEmail" name="registeredEmail" readonly>
+                </div>
+                <div>
+                    <label for="registeredGSTNumber">GST Number</label>
+                    <input type="text" id="registeredGSTNumber" name="registeredGSTNumber" readonly>
+                </div>
+                <div>
+                    <label for="registeredPAN">PAN</label>
+                    <input type="text" id="registeredPAN" name="registeredPAN" readonly>
+                </div>
+                 <div style="grid-column: span 2;">
+                    <label for="registeredVendorAddress">Vendor Address</label>
+                    <textarea id="registeredVendorAddress" name="registeredVendorAddress" rows="3" readonly></textarea>
+                </div>
+                <div>
+                    <label for="registeredBankName">Bank Name</label>
+                    <input type="text" id="registeredBankName" name="registeredBankName" readonly>
+                </div>
+                <div>
+                    <label for="registeredAccHolderName">Account Holder Name</label>
+                    <input type="text" id="registeredAccHolderName" name="registeredAccHolderName" readonly>
+                </div>
+                <div>
+                    <label for="registeredAccountNumber">Account Number</label>
+                    <input type="text" id="registeredAccountNumber" name="registeredAccountNumber" readonly>
+                </div>
+                <div>
+                     <label for="registeredBranchName">Branch Name</label>
+                    <input type="text" id="registeredBranchName" name="registeredBranchName" readonly>
+                </div>
+                <div>
+                    <label for="registeredIFSC">IFSC Code</label>
+                    <input type="text" id="registeredIFSC" name="registeredIFSC" readonly>
+                </div>
+                <div>
+                    <label for="registeredProvidingSites">Providing Sites</label>
+                    <input type="text" id="registeredProvidingSites" name="registeredProvidingSites" readonly>
+                </div>
+            </div>
+          </div>
+
+          <div id="newVendorSection" class="hidden" style="grid-column:span 2; background-color: #fefefe; padding:15px; border-radius:8px; border: 1px solid #e0e0e0;">
+            <h4 style="margin-bottom:12px;">New Vendor Details</h4>
+            <div class="form-grid">
+                <div>
+                    <label for="newVendorName">Vendor Name</label>
+                    <input type="text" id="newVendorName" name="newVendorName">
+                </div>
+                <div>
+                    <label for="newContactPerson">Contact Person</label>
+                    <input type="text" id="newContactPerson" name="newContactPerson">
+                </div>
+                <div>
+                    <label for="newContactNumber">Contact Number</label>
+                    <input type="text" id="newContactNumber" name="newContactNumber">
+                </div>
+                <div>
+                    <label for="newEmail">Email</label>
+                    <input type="email" id="newEmail" name="newEmail">
+                </div>
+                <div>
+                    <label for="newGSTNumber">GST Number</label>
+                    <input type="text" id="newGSTNumber" name="newGSTNumber">
+                </div>
+                <div>
+                    <label for="newPAN">PAN</label>
+                    <input type="text" id="newPAN" name="newPAN">
+                </div>
+                 <div style="grid-column: span 2;">
+                    <label for="newVendorAddress">Vendor Address</label>
+                    <textarea id="newVendorAddress" name="newVendorAddress" rows="3"></textarea>
+                </div>
+                <div>
+                    <label for="newBankName">Bank Name</label>
+                    <input type="text" id="newBankName" name="newBankName">
+                </div>
+                <div>
+                    <label for="newAccHolderName">Account Holder Name</label>
+                    <input type="text" id="newAccHolderName" name="newAccHolderName">
+                </div>
+                <div>
+                    <label for="newAccountNumber">Account Number</label>
+                    <input type="text" id="newAccountNumber" name="newAccountNumber">
+                </div>
+                <div>
+                     <label for="newBranchName">Branch Name</label>
+                    <input type="text" id="newBranchName" name="newBranchName">
+                </div>
+                <div>
+                    <label for="newIFSC">IFSC Code</label>
+                    <input type="text" id="newIFSC" name="newIFSC">
+                </div>
+                <div>
+                    <label for="newProvidingSites">Providing Sites</label>
+                    <select id="newProvidingSites" name="newProvidingSites" multiple></select>
+                </div>
+            </div>
+          </div>
+
+          <div>
+            <label for="requestedBy">Requested By (email)</label>
+            <input type="email" id="requestedBy" name="requestedBy" value="<?= user.email ?>" required readonly style="background-color:#eee;">
+          </div>
+
+          <div>
+            <label for="purchaseCategory">Purchase Category</label>
+            <select id="purchaseCategory" name="purchaseCategory"></select>
+          </div>
+
+          <div>
+            <label for="paymentTerms">Payment Terms</label>
+            <select id="paymentTerms" name="paymentTerms"></select>
+          </div>
+
+          <div>
+            <label for="deliveryTerms">Delivery Terms</label>
+            <select id="deliveryTerms" name="deliveryTerms"></select>
+          </div>
+
+          <div style="grid-column:span 2;">
+            <label for="deliveryLocation">Delivery Location</label>
+            <input type="text" id="deliveryLocation" name="deliveryLocation" />
+          </div>
+
+          <div style="grid-column:span 2;">
+            <label for="expectedDeliveryDate">Expected Delivery Date</label>
+            <input type="date" id="expectedDeliveryDate" name="expectedDeliveryDate" />
+          </div>
+        </div>
+
+        <h4 style="margin-top:12px">Items</h4>
+        <table class="items-table" id="itemsTable">
+          <thead><tr><th>Item Code</th><th>Name</th><th>Qty</th><th>UOM</th><th>Rate</th><th>GST%</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="btn" onclick="addItemRow()">Add Item</button>
+
+        <div style="margin-top:12px; text-align:right;">
+          <button type="button" class="btn" onclick="submitPR()">Submit PR</button>
+        </div>
+      </form>
+      <div id="msg"></div>
+    </div>
+
+    <div id="vendorModal" class="modal-bg">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeVendorModal()">&times;</span>
+            <h3>Select a Vendor</h3>
+            <div id="vendorCardsContainer" class="vendor-cards-grid">
+                </div>
+        </div>
+    </div>
+
+    <script>
+      let vendorMaster = [];
+
+      // --- UTILITY TO SHOW MESSAGES ---
+      function showMessage(message, isError = false) {
+          const msgDiv = document.getElementById('msg');
+          msgDiv.textContent = message;
+          msgDiv.className = isError ? 'msg-error' : 'msg-success';
+          msgDiv.style.display = 'block';
+      }
+
+      // --- POPULATE MASTER DROPDOWNS ---
+      function populateMasterList() {
+        google.script.run.withSuccessHandler(function(md) {
+          if (!md) {
+            console.error("Master data is null or undefined.");
+            return;
+          }
+          
+          const populate = (elementId, options) => {
+              const select = document.getElementById(elementId);
+              if (select && Array.isArray(options)) {
+                  options.forEach(s => {
+                      const o = document.createElement('option');
+                      o.value = s;
+                      o.textContent = s;
+                      select.appendChild(o);
+                  });
+              }
+          };
+
+          populate('site', md.Sites);
+          populate('vendorRegistered', md.Yes_No);
+          populate('purchaseCategory', md.Purchase_Categories);
+          populate('paymentTerms', md.Payment_Terms);
+          populate('deliveryTerms', md.Delivery_Terms);
+          populate('newProvidingSites', md.Sites);
+
+        }).withFailureHandler(function(err) {
+          showMessage("Failed to load master data: " + err.message, true);
+        }).getMasterDataForForm();
+      }
+
+      // --- VENDOR MODAL ---
+      function openVendorModal() {
+        document.getElementById('vendorModal').classList.add('active');
+      }
+
+      function closeVendorModal() {
+        document.getElementById('vendorModal').classList.remove('active');
+      }
+
+      // --- POPULATE VENDOR CARDS IN MODAL ---
+      function populateVendorCards() {
+        console.log("CLIENT: Attempting to populate vendor cards...");
+        if (vendorMaster.length === 0) {
+          console.log("CLIENT: Vendor master list is empty. Fetching from server...");
+          google.script.run.withSuccessHandler(function(vendors) {
+            console.log("CLIENT: Successfully received data from server. Raw response:", vendors);
+            
+            if (!Array.isArray(vendors)) {
+                console.error("CLIENT: Error - Data received from server is not an array!", vendors);
+                vendorMaster = [];
+            } else {
+                vendorMaster = vendors;
+            }
+
+            console.log("CLIENT: Stored data in vendorMaster array:", vendorMaster);
+            renderVendorCards();
+          }).withFailureHandler(function(err) {
+            console.error("CLIENT: Failed to load vendor list from server:", err);
+            showMessage("Failed to load vendor list: " + err.message, true);
+          }).getVendorMasterList();
+        } else {
+          console.log("CLIENT: Vendor master list already populated. Rendering cards from existing data.");
+          renderVendorCards();
+        }
+      }
+
+      function renderVendorCards() {
+        console.log("CLIENT: Now rendering vendor cards...");
+        const container = document.getElementById('vendorCardsContainer');
+        container.innerHTML = ''; 
+        if (!vendorMaster || vendorMaster.length === 0) {
+          console.warn("CLIENT: No vendors to render. The vendorMaster array is empty.");
+          container.innerHTML = '<p>No registered vendors found.</p>';
+          return;
+        }
+
+        console.log(\`CLIENT: Found \${vendorMaster.length} vendor(s) to display.\`);
+        vendorMaster.forEach((v, index) => {
+          console.log(\`CLIENT: Processing vendor #\${index + 1}\`, v);
+          
+          if (v && v.Company_Name) {
+            const card = document.createElement('div');
+            card.className = 'vendor-card';
+            card.onclick = () => selectVendor(v.Vendor_ID);
+            card.innerHTML = \`
+              <h5>\${v.Company_Name}</h5>
+              <p><strong>Contact:</strong> \${v.Contact_Person || 'N/A'}</p>
+              <p><strong>Email:</strong> \${v.Email_ID || 'N/A'}</p>\`;
+            container.appendChild(card);
+          } else {
+            console.warn(\`CLIENT: Skipping vendor #\${index + 1} because it's missing a Company_Name.\`, v);
+          }
+        });
+      }
+      
+      // --- HANDLE VENDOR TYPE CHANGE (Registered Yes/No) ---
+      function onVendorRegisteredChange() {
+        const val = document.getElementById('vendorRegistered').value;
+        const registeredSection = document.getElementById('registeredVendorSection');
+        const newVendorSection = document.getElementById('newVendorSection');
+        
+        registeredSection.classList.toggle('hidden', val !== 'Yes');
+        newVendorSection.classList.toggle('hidden', val !== 'No');
+
+        if (val === 'Yes') {
+          populateVendorCards();
+        }
+      }
+
+      // --- HANDLE VENDOR SELECTION FROM MODAL ---
+      function selectVendor(vendorId) {
+        const vendor = vendorMaster.find(v => v.Vendor_ID === vendorId);
+        if (vendor) {
+          document.getElementById('vendorSelect').value = vendor.Vendor_ID;
+          document.getElementById('selectedVendorDisplay').value = \`\${vendor.Company_Name} (\${vendor.Vendor_ID})\`;
+          document.getElementById('registeredVendorName').value = vendor.Company_Name || '';
+          document.getElementById('registeredContactPerson').value = vendor.Contact_Person || '';
+          document.getElementById('registeredContactNumber').value = vendor.Contact_Number || '';
+          document.getElementById('registeredEmail').value = vendor.Email_ID || '';
+          document.getElementById('registeredGSTNumber').value = vendor.GST_Number || '';
+          document.getElementById('registeredPAN').value = vendor.Vendor_PAN || '';
+          document.getElementById('registeredVendorAddress').value = vendor.Vendor_Address || '';
+          document.getElementById('registeredBankName').value = vendor.Bank_Name || '';
+          document.getElementById('registeredAccHolderName').value = vendor.Acc_Holder_Name || '';
+          document.getElementById('registeredAccountNumber').value = vendor.Acc_Number || '';
+          document.getElementById('registeredBranchName').value = vendor.Branch_Name || '';
+          document.getElementById('registeredIFSC').value = vendor.IFSC_CODE || '';
+          document.getElementById('registeredProvidingSites').value = vendor.Providing_Sites || '';
+        }
+        closeVendorModal();
+      }
+
+      // --- ADD ITEM ROW TO THE TABLE ---
+      function addItemRow() {
+        const tbody = document.querySelector('#itemsTable tbody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = \`<td><input name="itemCode[]" class="item-input"></td>
+                        <td><input name="itemName[]" class="item-input"></td>
+                        <td><input type="number" name="qty[]" min="0" class="item-input"></td>
+                        <td><input name="uom[]" class="item-input"></td>
+                        <td><input type="number" name="rate[]" class="item-input"></td>
+                        <td><input type="number" name="gst[]" value="0" class="item-input"></td>
+                        <td><button type="button" onclick="this.closest('tr').remove()" class="btn-remove">X</button></td>\`;
+        tbody.appendChild(tr);
+      }
+
+      // --- SUBMIT THE PR FORM ---
+      function submitPR() {
+        const form = document.getElementById('prForm');
+        const items = [];
+        const itemRows = document.querySelectorAll('#itemsTable tbody tr');
+
+        itemRows.forEach(row => {
+            const itemName = row.querySelector('[name="itemName[]"]').value;
+            const qty = Number(row.querySelector('[name="qty[]"]').value || 0);
+            if (itemName && qty > 0) {
+                items.push({
+                    Item_Code: row.querySelector('[name="itemCode[]"]').value,
+                    Item_Name: itemName,
+                    Qty: qty,
+                    UOM: row.querySelector('[name="uom[]"]').value,
+                    Rate: Number(row.querySelector('[name="rate[]"]').value || 0),
+                    'GST_%': Number(row.querySelector('[name="gst[]"]').value || 0)
+                });
+            }
+        });
+
+        if (items.length === 0) {
+            showMessage("Please add at least one item with a valid quantity.", true);
+            return;
+        }
+
+        const vendorRegistered = form.vendorRegistered.value;
+        let vendorId = '';
+        let vendorDetails = {};
+
+        if (vendorRegistered === 'Yes') {
+          vendorId = form.vendorSelect.value;
+          if (!vendorId) {
+              showMessage("Please select a registered vendor.", true);
+              return;
+          }
+        } else if (vendorRegistered === 'No') {
+          const providingSites = Array.from(form.newProvidingSites.selectedOptions).map(opt => opt.value).join(', ');
+          vendorDetails = {
+            Company_Name: form.newVendorName.value,
+            Contact_Person: form.newContactPerson.value,
+            Contact_Number: form.newContactNumber.value,
+            Email_ID: form.newEmail.value,
+            GST_Number: form.newGSTNumber.value,
+            Vendor_PAN: form.newPAN.value,
+            Bank_Name: form.newBankName.value,
+            Acc_Holder_Name: form.newAccHolderName.value,
+            Acc_Number: form.newAccountNumber.value,
+            Branch_Name: form.newBranchName.value,
+            IFSC_CODE: form.newIFSC.value,
+            Vendor_Address: form.newVendorAddress.value,
+            Providing_Sites: providingSites
+          };
+          if(!vendorDetails.Company_Name){
+              showMessage("Please enter the new vendor's name.", true);
+              return;
+          }
+        } else {
+            showMessage("Please specify if the vendor is registered.", true);
+            return;
+        }
+
+        const payload = {
+          site: form.site.value,
+          requestedBy: form.requestedBy.value,
+          vendorId: vendorId,
+          vendorRegistered: vendorRegistered,
+          vendorDetails: vendorDetails,
+          purchaseCategory: form.purchaseCategory.value,
+          paymentTerms: form.paymentTerms.value,
+          deliveryTerms: form.deliveryTerms.value,
+          deliveryLocation: form.deliveryLocation.value,
+          expectedDeliveryDate: form.expectedDeliveryDate.value,
+          items: items
+        };
+
+        showMessage("Submitting PR...", false);
+
+        google.script.run.withSuccessHandler(function(resp) {
+          if(resp.success){
+            showMessage('PR Created successfully: ' + (resp.prId || ''));
+            form.reset();
+            document.querySelector('#itemsTable tbody').innerHTML = '';
+            onVendorRegisteredChange(); 
+          } else {
+            showMessage(resp.message || 'An unknown error occurred.', true);
+          }
+        }).withFailureHandler(function(err) {
+          showMessage('Error: ' + err.message, true);
+        }).createPR(payload);
+      }
+
+      // --- INITIALIZE THE FORM ---
+      document.addEventListener("DOMContentLoaded", function() {
+          populateMasterList();
+          onVendorRegisteredChange();
+          addItemRow(); 
+      });
+    </script>
+  `;
+
+  const t = HtmlService.createTemplate(htmlTemplate);
   t.user = user;
   return t.evaluate().getContent();
 }
