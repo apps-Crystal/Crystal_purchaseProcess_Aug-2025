@@ -1,0 +1,131 @@
+<style>
+  .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  label { font-weight:600; font-size:13px; color:#333; margin-bottom:6px; display:block; }
+  input, select, textarea { width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; }
+  .btn { background:#2962ff; color:#fff; padding:10px 14px; border:none; border-radius:6px; cursor:pointer; }
+  .full-width { grid-column: span 2; }
+</style>
+
+<div class="card">
+  <h3>Register New Vendor</h3>
+  <form id="vendorForm">
+    <div class="form-grid">
+      <div>
+        <label for="companyName">Company Name</label>
+        <input type="text" id="companyName" name="companyName" required>
+      </div>
+      <div>
+        <label for="contactPerson">Contact Person</label>
+        <input type="text" id="contactPerson" name="contactPerson" required>
+      </div>
+      <div>
+        <label for="contactNumber">Contact Number</label>
+        <input type="text" id="contactNumber" name="contactNumber" required>
+      </div>
+      <div>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div>
+        <label for="gstNumber">GST Number</label>
+        <input type="text" id="gstNumber" name="gstNumber">
+      </div>
+      <div>
+        <label for="pan">PAN</label>
+        <input type="text" id="pan" name="pan">
+      </div>
+       <div class="full-width">
+        <label for="vendorAddress">Vendor Address</label>
+        <textarea id="vendorAddress" name="vendorAddress"></textarea>
+      </div>
+      <div>
+        <label for="bankName">Bank Name</label>
+        <input type="text" id="bankName" name="bankName">
+      </div>
+      <div>
+        <label for="accHolderName">Account Holder Name</label>
+        <input type="text" id="accHolderName" name="accHolderName">
+      </div>
+      <div>
+        <label for="accountNumber">Account Number</label>
+        <input type="text" id="accountNumber" name="accountNumber">
+      </div>
+      <div>
+        <label for="branchName">Branch Name</label>
+        <input type="text" id="branchName" name="branchName">
+      </div>
+      <div>
+        <label for="ifsc">IFSC Code</label>
+        <input type="text" id="ifsc" name="ifsc">
+      </div>
+       <div>
+        <label for="providingSites">Providing Sites</label>
+        <select id="providingSites" name="providingSites" multiple></select>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; text-align:right;">
+      <button type="button" class="btn" onclick="submitVendor()">Register Vendor</button>
+    </div>
+  </form>
+  <div id="msg" style="margin-top:8px"></div>
+</div>
+
+<script>
+  function populateSiteList() {
+    google.script.run.withSuccessHandler(function(md) {
+      const providingSites = document.getElementById('providingSites');
+      if (providingSites) {
+        providingSites.innerHTML = '';
+        if (Array.isArray(md.Sites)) {
+          md.Sites.forEach(s => {
+            const o = document.createElement('option');
+            o.value = s;
+            o.textContent = s;
+            providingSites.appendChild(o);
+          });
+        }
+      }
+    }).withFailureHandler(function(err){
+      console.error('getMasterDataForForm failed:', err);
+    }).getMasterDataForForm();
+  }
+
+  function submitVendor() {
+    const form = document.getElementById('vendorForm');
+    const providingSites = Array.from(form.providingSites.selectedOptions).map(opt => opt.value).join(', ');
+    
+    const vendorDetails = {
+      Company_Name: form.companyName.value,
+      Contact_Person: form.contactPerson.value,
+      Contact_Number: form.contactNumber.value,
+      Email_ID: form.email.value,
+      GST_Number: form.gstNumber.value,
+      Vendor_PAN: form.pan.value,
+      Bank_Name: form.bankName.value,
+      Acc_Holder_Name: form.accHolderName.value,
+      Acc_Number: form.accountNumber.value,
+      Branch_Name: form.branchName.value,
+      IFSC_CODE: form.ifsc.value,
+      Vendor_Address: form.vendorAddress.value,
+      Providing_Sites: providingSites
+    };
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response.success) {
+          document.getElementById('msg').innerText = 'Vendor registered successfully with ID: ' + response.vendorId;
+          form.reset();
+        } else {
+          document.getElementById('msg').innerText = 'Error: ' + response.message;
+        }
+      })
+      .withFailureHandler(function(err) {
+        document.getElementById('msg').innerText = 'Error: ' + err.message;
+      })
+      .registerVendor(vendorDetails);
+  }
+
+  // Initial population
+  populateSiteList();
+</script>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <title><?= pageTitle ?></title>
+    <style>
+      /* minimal global styles; full styles can live in each page or a shared styles.html */
+      body { font-family: Arial, Helvetica, sans-serif; background:#f4f7fc; margin:0; padding:0; color:#222; }
+      .container { width:100%; max-width:1200px; margin:0 auto; padding:18px; }
+      nav { background:#2962ff; color:#fff; padding:10px; }
+      nav a { color:#fff; margin-right:12px; text-decoration:none; font-weight:600; }
+      header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+      .card { background:white; padding:16px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.06); margin-bottom:12px; }
+    </style>
+  </head>
+  <body>
+    <header class="container">
+      <div>
+        <h2>Purchase Requisition System</h2>
+        <div style="font-size:13px;color:#666"><?= user.name ?> (<?= user.email ?>)</div>
+      </div>
+      <div>
+        <a href="<?= ScriptApp.getService().getUrl() ?>?page=home">Dashboard</a>
+        <a href="<?= ScriptApp.getService().getUrl() ?>?page=requisitionForm">New PR</a>
+        <a href="<?= ScriptApp.getService().getUrl() ?>?page=requisitionApproval">PR Approvals</a>
+        <a href="<?= ScriptApp.getService().getUrl() ?>?page=poForm">Create PO</a>
+        <a href="<?= ScriptApp.getService().getUrl() ?>?page=poApproval">PO Approvals</a>
+        <a href="<?= ScriptApp.getService().getUrl() ?>?page=paymentSubmission" class="nav-link <?= activePage === 'paymentSubmission' ? 'active' : '' ?>">Payment Submission</a>
+        <a href="<?= ScriptApp.getService().getUrl() ?>?page=addVendor" class="nav-link <?= activePage === 'addVendor' ? 'active' : '' ?>">Register Vendor</a>
+      </div>
+    </header>
+
+    <main class="container">
+      <?!= pageContent ?>
+    </main>
+  </body>
+</html>

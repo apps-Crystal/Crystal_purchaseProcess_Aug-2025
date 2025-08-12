@@ -1,0 +1,76 @@
+<!-- poForm.html -->
+<style>
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .btn{ background:#2962ff;color:#fff;padding:8px 12px;border-radius:6px;border:none;cursor:pointer;}
+</style>
+
+<div class="card">
+  <h3>Create PO from Approved PR</h3>
+  <form id="poForm">
+    <div class="form-grid">
+      <div>
+        <label>PR ID</label>
+        <select id="prId" required></select>
+      </div>
+      <div>
+        <label>PO No (Tally)</label>
+        <input id="poNo" />
+      </div>
+      <div>
+        <label>PO Date</label>
+        <input type="date" id="poDate" />
+      </div>
+      <div>
+        <label>PO Prepared By</label>
+        <input id="poPreparedBy" value="<?= user.email ?>" />
+      </div>
+    </div>
+
+    <div id="prDetails" style="margin-top:12px;"></div>
+
+    <div style="text-align:right; margin-top:12px;">
+      <button type="button" class="btn" onclick="submitPO()">Create PO</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function loadPRs() {
+    google.script.run.withSuccessHandler(function(list){
+      const sel = document.getElementById('prId');
+      sel.innerHTML = '<option value="">Select PR</option>';
+      (list||[]).forEach(id => {
+        const o = document.createElement('option'); o.value=id; o.textContent=id; sel.appendChild(o);
+      });
+    }).getApprovedPRsList();
+  }
+
+  document.getElementById('prId').addEventListener('change', function(){
+    const id = this.value;
+    if (!id) { document.getElementById('prDetails').innerHTML=''; return; }
+    google.script.run.withSuccessHandler(function(details){
+      const dv = document.getElementById('prDetails');
+      let html = `<div><strong>Site:</strong> ${details.site || ''} | <strong>Payment:</strong> ${details.paymentTerms || ''}</div>`;
+      html += `<h4>Items</h4><table style="width:100%"><thead><tr><th>Item</th><th>Qty</th><th>UOM</th><th>Rate</th><th>Total</th></tr></thead><tbody>`;
+      (details.items||[]).forEach(it => html += `<tr><td>${it.itemName}</td><td>${it.quantity}</td><td>${it.uom}</td><td>₹${it.rate}</td><td>₹${it.totalCost}</td></tr>`);
+      html += `</tbody></table>`;
+      dv.innerHTML = html;
+    }).getRequisitionDetailsForPO(id);
+  });
+
+  function submitPO(){
+    const payload = {
+      prId: document.getElementById('prId').value,
+      poNoTally: document.getElementById('poNo').value,
+      poDate: document.getElementById('poDate').value,
+      poPreparedBy: document.getElementById('poPreparedBy').value,
+      attachFileId: '', attachFileUrl: ''
+    };
+    google.script.run.withSuccessHandler(function(resp){
+      alert('PO created: ' + resp.poId);
+      window.location = "<?= ScriptApp.getService().getUrl() ?>?page=poApproval";
+    }).withFailureHandler(function(e){ alert(e.message); }).createPOFromPR(payload);
+  }
+
+  loadPRs();
+</script>

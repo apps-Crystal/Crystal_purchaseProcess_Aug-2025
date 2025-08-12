@@ -1,0 +1,41 @@
+<!-- requisitionApproval.html -->
+<style>
+  .pr-card { display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #eee; }
+  .btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
+  .btn-approve{ background:#16a34a; color:#fff; }
+  .btn-reject{ background:#ef4444; color:#fff; }
+</style>
+
+<div class="card">
+  <h3>Pending PR Approvals</h3>
+  <div id="list">
+    <? if (pending && pending.length>0) { ?>
+      <? for (let i=0;i<pending.length;i++){ let p = pending[i]; ?>
+        <div class="pr-card" id="pr-<?= p.prId ?>">
+          <div>
+            <div><strong><?= p.prId ?></strong> — <?= p.site ?> — ₹<?= Number(p.total).toFixed(2) ?></div>
+            <div style="font-size:13px;color:#666">Requested: <?= new Date(p.date).toLocaleDateString() ?> by <?= p.requestedBy ?></div>
+          </div>
+          <div>
+            <button class="btn btn-approve" onclick="approve('<?= p.prId ?>')">Approve</button>
+            <button class="btn btn-reject" onclick="reject('<?= p.prId ?>')">Reject</button>
+          </div>
+        </div>
+      <? } ?>
+    <? } else { ?>
+      <div>No pending PRs</div>
+    <? } ?>
+  </div>
+</div>
+
+<script>
+  function approve(prId) {
+    const remarks = prompt("Any remarks (optional) for approval?");
+    google.script.run.withSuccessHandler(function(){ document.getElementById('pr-' + prId).remove(); }).withFailureHandler(function(e){ alert(e.message); }).handlePRApproval(prId,'Approved',remarks);
+  }
+  function reject(prId) {
+    const remarks = prompt("Remarks (required) for rejection:");
+    if (!remarks) return alert("Remarks required.");
+    google.script.run.withSuccessHandler(function(){ document.getElementById('pr-' + prId).remove(); }).withFailureHandler(function(e){ alert(e.message); }).handlePRApproval(prId,'Rejected',remarks);
+  }
+</script>

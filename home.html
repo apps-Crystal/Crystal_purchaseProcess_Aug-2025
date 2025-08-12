@@ -1,0 +1,48 @@
+<!-- home.html -->
+<div>
+  <div class="card">
+    <h3>Overview</h3>
+    <div id="kpis" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
+  </div>
+
+  <div class="card">
+    <h3>Recent PRs</h3>
+    <table id="recentPRs" style="width:100%; border-collapse:collapse;">
+      <thead><tr><th>ID</th><th>Site</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function renderDashboard() {
+    google.script.run.withSuccessHandler(function(data) {
+      const kpis = document.getElementById('kpis');
+      kpis.innerHTML = '';
+      const items = [
+        {label:'Total PRs', value: data.totalPR},
+        {label:'Pending PR', value: data.pendingPR},
+        {label:'Approved PR', value: data.approvedPR},
+        {label:'Total PO', value: data.totalPO},
+        {label:'Payments Pending', value: data.paymentsPendingDirector}
+      ];
+      items.forEach(it => {
+        const el = document.createElement('div');
+        el.style.background='white'; el.style.padding='12px'; el.style.borderRadius='8px'; el.style.minWidth='140px'; el.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)';
+        el.innerHTML = `<div style="font-size:13px;color:#666">${it.label}</div><div style="font-size:20px;font-weight:700">${it.value}</div>`;
+        kpis.appendChild(el);
+      });
+
+      // recent PRs
+      const tbody = document.querySelector('#recentPRs tbody');
+      tbody.innerHTML = '';
+      (data.recentPRs || []).forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.id}</td><td>${r.site}</td><td>₹${Number(r.total||0).toFixed(2)}</td><td>${r.status}</td><td>${new Date(r.date).toLocaleDateString()}</td>`;
+        tbody.appendChild(tr);
+      });
+
+    }).getDashboardData();
+  }
+  renderDashboard();
+</script>
