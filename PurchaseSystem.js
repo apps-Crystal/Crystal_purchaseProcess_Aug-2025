@@ -624,6 +624,57 @@ function createVendor(vendorPayload) {
 /**
  * Returns all vendors as array of objects for the form dropdown/autofill.
  */
+// function getVendorMasterList() {
+//   try {
+//     console.log("SERVER: getVendorMasterList function started.");
+//     const ss = SpreadsheetApp.getActive();
+//     const sheet = ss.getSheetByName("Vendor_Master");
+//     if (!sheet) {
+//       console.error("SERVER: Vendor_Master sheet not found.");
+//       return [];
+//     }
+//     const data = sheet.getDataRange().getValues();
+//     console.log(`SERVER: Found ${data.length - 1} total rows of data in Vendor_Master.`);
+
+//     if (data.length <= 1) { 
+//       console.warn("SERVER: Vendor_Master sheet is empty or contains only headers.");
+//       return [];
+//     }
+//     const headers = data[0];
+//     const activeIdx = headers.indexOf("Active");
+
+//     if (activeIdx === -1) {
+//       console.error('SERVER: "Active" column not found in Vendor_Master headers.');
+//       return [];
+//     }
+    
+//     console.log(`SERVER: 'Active' column found at index ${activeIdx}.`);
+    
+//     const allVendors = data.slice(1).map(row => {
+//       let obj = {};
+//       headers.forEach((h, i) => obj[h] = row[i]);
+//       return obj;
+//     });
+
+//     const activeVendors = allVendors.filter(vendor => vendor.Active && vendor.Active.toString().trim() === "Yes");
+    
+//     console.log(`SERVER: Filtered down to ${activeVendors.length} active vendors.`);
+    
+//     // *** NEW LOGGING: Show the actual data of the vendors being returned ***
+//     if (activeVendors.length > 0) {
+//       console.log("SERVER: Returning the following active vendors:", JSON.stringify(activeVendors, null, 2));
+//     }
+    
+//     return activeVendors;
+
+//   } catch (e) {
+//     console.error("SERVER: Error in getVendorMasterList: " + e.toString(), e.stack);
+//     return []; 
+//   }
+// }
+/**
+ * Returns all vendors as array of objects for the form dropdown/autofill.
+ */
 function getVendorMasterList() {
   try {
     console.log("SERVER: getVendorMasterList function started.");
@@ -652,7 +703,15 @@ function getVendorMasterList() {
     
     const allVendors = data.slice(1).map(row => {
       let obj = {};
-      headers.forEach((h, i) => obj[h] = row[i]);
+      headers.forEach((h, i) => {
+        let value = row[i];
+        // Check if the value is a Date object and convert it to a string.
+        if (value instanceof Date) {
+            obj[h] = value.toISOString();
+        } else {
+            obj[h] = value;
+        }
+      });
       return obj;
     });
 
@@ -660,7 +719,6 @@ function getVendorMasterList() {
     
     console.log(`SERVER: Filtered down to ${activeVendors.length} active vendors.`);
     
-    // *** NEW LOGGING: Show the actual data of the vendors being returned ***
     if (activeVendors.length > 0) {
       console.log("SERVER: Returning the following active vendors:", JSON.stringify(activeVendors, null, 2));
     }
