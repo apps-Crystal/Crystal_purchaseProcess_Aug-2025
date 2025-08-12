@@ -18,7 +18,7 @@ function getHeaderMap(sheet) {
   const headers = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
   const map = {};
   headers.forEach((h,i) => map[h] = i);
-  console.log("Header Map:", map); // Add this line
+  // console.log("Header Map:", map); // Add this line
   return map;
 }
 
@@ -27,7 +27,7 @@ function safeGetData(sheet) {
   const lc = sheet.getLastColumn();
   if (lr < 2 || lc < 1) return [];
   const data = sheet.getRange(2,1,lr-1,lc).getValues();
-  console.log("Data from safeGetData:", data); // Add this line
+  // console.log("Data from safeGetData:", data); // Add this line
   return data;
 }
 
@@ -579,7 +579,7 @@ function getMasterDataForForm() {
     }
   });
 
-  console.log("Master Data:", masterData); // Add this line
+  // console.log("Master Data:", masterData); // Add this line
   return masterData;
 }
 
@@ -626,35 +626,48 @@ function createVendor(vendorPayload) {
  */
 function getVendorMasterList() {
   try {
+    console.log("getVendorMasterList: Function started.");
     const ss = SpreadsheetApp.getActive();
     const sheet = ss.getSheetByName("Vendor_Master");
     if (!sheet) {
-      console.error("Vendor_Master sheet not found.");
+      console.error("getVendorMasterList: Vendor_Master sheet not found.");
       return [];
     }
     const data = sheet.getDataRange().getValues();
-    if (!data.length) {
-      console.error("Vendor_Master sheet is empty.");
+    console.log(`getVendorMasterList: Found ${data.length - 1} total rows of data in Vendor_Master.`);
+
+    if (data.length <= 1) { // Only headers or empty
+      console.warn("getVendorMasterList: Vendor_Master sheet is empty or contains only headers.");
       return [];
     }
     const headers = data[0];
     const activeIdx = headers.indexOf("Active");
+
     if (activeIdx === -1) {
-      console.error('"Active" column not found in Vendor_Master.');
+      console.error('getVendorMasterList: "Active" column not found in Vendor_Master headers.');
       return [];
     }
-    return data.slice(1)
-      .filter(row => row[activeIdx] === "Yes")
-      .map(row => {
-        let obj = {};
-        headers.forEach((h, i) => obj[h] = row[i]);
-        return obj;
-      });
+    
+    console.log(`getVendorMasterList: 'Active' column found at index ${activeIdx}.`);
+    
+    const allVendors = data.slice(1).map(row => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = row[i]);
+      return obj;
+    });
+
+    const activeVendors = allVendors.filter(vendor => vendor.Active === "Yes");
+    
+    console.log(`getVendorMasterList: Filtered down to ${activeVendors.length} active vendors.`);
+    
+    return activeVendors;
+
   } catch (e) {
-    console.error("Error in getVendorMasterList: " + e.toString());
-    return [];
+    console.error("Error in getVendorMasterList: " + e.toString(), e.stack);
+    return []; // Return empty array on error
   }
 }
+
 
 /**
  * Registers a new vendor in Vendor_Master and returns the new Vendor_ID.

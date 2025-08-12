@@ -302,27 +302,35 @@
 
   // --- POPULATE VENDOR CARDS IN MODAL ---
   function populateVendorCards() {
+    console.log("Attempting to populate vendor cards...");
     // Fetch only if vendor list is empty
     if (vendorMaster.length === 0) {
+      console.log("Vendor master list is empty, fetching from server...");
       google.script.run.withSuccessHandler(function(vendors) {
+        console.log("Successfully fetched from server. Raw data:", vendors);
         vendorMaster = Array.isArray(vendors) ? vendors : [];
+        console.log("Processed vendorMaster array:", vendorMaster);
         renderVendorCards();
       }).withFailureHandler(function(err) {
+        console.error("Failed to load vendor list:", err);
         showMessage("Failed to load vendor list: " + err.message, true);
       }).getVendorMasterList();
     } else {
-      // If already fetched, just render them
+      console.log("Vendor master list already populated, rendering cards...");
       renderVendorCards();
     }
   }
 
   function renderVendorCards() {
+    console.log("Rendering vendor cards...");
     const container = document.getElementById('vendorCardsContainer');
     container.innerHTML = ''; // Clear previous cards
     if (!vendorMaster || vendorMaster.length === 0) {
+      console.log("No vendors to render.");
       container.innerHTML = '<p>No registered vendors found.</p>';
       return;
     }
+    console.log(`Found ${vendorMaster.length} vendors to render.`);
     vendorMaster.forEach(v => {
       if (v.Company_Name) {
         const card = document.createElement('div');
