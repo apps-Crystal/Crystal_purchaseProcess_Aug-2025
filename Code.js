@@ -22,10 +22,9 @@ function doGet(e) {
 
     case 'requisitionForm':
       pageTitle = 'New Requisition';
-      // Use the HTML file as a template and pass the user object
-      const requisitionTemplate = HtmlService.createTemplateFromFile('requisitionFrm');
-      requisitionTemplate.user = user; // Pass the user object to the template
-      pageContent = requisitionTemplate.evaluate().getContent();
+      // Call the function from requisitionForm.js which returns the page's HTML content.
+      // The function itself builds the HTML string.
+      pageContent = requisitionFormPage(user).getContent();
       break;
 
     case 'requisitionApproval':

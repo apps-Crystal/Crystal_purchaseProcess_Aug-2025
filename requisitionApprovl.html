@@ -4,6 +4,8 @@
   .btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
   .btn-approve{ background:#16a34a; color:#fff; }
   .btn-reject{ background:#ef4444; color:#fff; }
+  #pr-modal { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center; z-index:1000; }
+  #pr-modal > div { background:#fff; padding:24px; max-width:500px; width:90%; border-radius:8px; position:relative; }
 </style>
 
 <div class="card">
@@ -19,12 +21,20 @@
           <div>
             <button class="btn btn-approve" onclick="approve('<?= p.prId ?>')">Approve</button>
             <button class="btn btn-reject" onclick="reject('<?= p.prId ?>')">Reject</button>
+            <button class="btn" style="background:#2563eb;color:#fff" onclick="viewPR('<?= p.prId ?>')">View</button>
           </div>
         </div>
       <? } ?>
     <? } else { ?>
       <div>No pending PRs</div>
     <? } ?>
+  </div>
+</div>
+
+<div id="pr-modal">
+  <div>
+    <button onclick="closeModal()" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:20px;cursor:pointer;">×</button>
+    <div id="pr-modal-content"></div>
   </div>
 </div>
 
@@ -37,5 +47,49 @@
     const remarks = prompt("Remarks (required) for rejection:");
     if (!remarks) return alert("Remarks required.");
     google.script.run.withSuccessHandler(function(){ document.getElementById('pr-' + prId).remove(); }).withFailureHandler(function(e){ alert(e.message); }).handlePRApproval(prId,'Rejected',remarks);
+  }
+  function viewPR(prId) {
+    if (!prId) {
+      alert("Invalid PR ID.");
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(function (pr) {
+        let html = `
+          <h4>Requisition Information</h4>
+          <div><strong>ID:</strong> ${pr.prId}</div>
+          <div><strong>Employee:</strong> ${pr.requestedBy}</div>
+          <div><strong>Site:</strong> ${pr.site}</div>
+          <div><strong>Date:</strong> ${new Date(pr.date).toLocaleDateString()}</div>
+          <div><strong>Expected Delivery:</strong> ${pr.expectedDelivery || 'N/A'}</div>
+          <div><strong>Status:</strong> ${pr.status}</div>
+          <h4 style="margin-top:16px;">Vendor Information</h4>
+          <div><strong>Company Name:</strong> ${pr.vendorCompany || 'N/A'}</div>
+          <div><strong>Contact Person:</strong> ${pr.vendorContact || 'N/A'}</div>
+          <div><strong>Email:</strong> ${pr.vendorEmail || 'N/A'}</div>
+          <div><strong>Phone:</strong> ${pr.vendorPhone || 'N/A'}</div>
+          <h4 style="margin-top:16px;">Items</h4>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr><th style="text-align:left;">Item</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr>
+            ${(pr.items || []).map(item => `<tr>
+              <td>${item.name}</td>
+              <td>${item.qty} ${item.unit || ''}</td>
+              <td>₹${Number(item.price).toFixed(2)}</td>
+              <td>₹${Number(item.total).toFixed(2)}</td>
+            </tr>`).join('')}
+          </table>
+          <div style="margin-top:8px;"><strong>Total Amount:</strong> ₹${Number(pr.total).toFixed(2)}</div>
+          <div style="margin-top:8px;"><strong>Approver Remarks:</strong> ${pr.remarks || ''}</div>
+        `;
+        document.getElementById('pr-modal-content').innerHTML = html;
+        document.getElementById('pr-modal').style.display = 'flex';
+      })
+      .withFailureHandler(function (e) {
+        alert(e.message);
+      })
+      .getPRDetails(prId);
+  }
+  function closeModal() {
+    document.getElementById('pr-modal').style.display = 'none';
   }
 </script>
