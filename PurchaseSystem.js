@@ -605,7 +605,7 @@ function createVendor(vendorPayload) {
   "Bank_Name": vendorPayload.bankName,
   "Acc_Holder_Name": vendorPayload.accountHolderName,
   "Acc_Number": vendorPayload.accountNo,
-  "Branch__Name": vendorPayload.branchName,
+  "Branch_Name": vendorPayload.branchName,
   "IFSC_CODE": vendorPayload.ifscCode,
   "GST_Number": vendorPayload.gstNo,
   "Providing_Sites": vendorPayload.providingSites,
@@ -656,7 +656,7 @@ function getVendorMasterList() {
       return obj;
     });
 
-    const activeVendors = allVendors.filter(vendor => vendor.Active.trim() === "Yes");
+    const activeVendors = allVendors.filter(vendor => vendor.Active && vendor.Active.toString().trim() === "Yes");
     
     console.log(`SERVER: Filtered down to ${activeVendors.length} active vendors.`);
     
